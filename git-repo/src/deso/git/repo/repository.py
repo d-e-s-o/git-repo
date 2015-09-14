@@ -28,6 +28,9 @@ from os import (
 from os.path import (
   join,
 )
+from re import (
+  sub,
+)
 from subprocess import (
   check_output,
   DEVNULL,
@@ -117,7 +120,13 @@ class Repository:
 
   def __getattr__(self, name):
     """Invoke a git command."""
-    return lambda *args, **kwargs: self.git(name, *args, **kwargs)
+    def replace(match):
+      """Replace an upper case char with a dash followed by a lower case version of it."""
+      s, = match.groups()
+      return "-%s" % s.lower()
+
+    command = sub("([A-Z])", replace, name)
+    return lambda *args, **kwargs: self.git(command, *args, **kwargs)
 
 
   def _init(self, *args, init_user=True, **kwargs):

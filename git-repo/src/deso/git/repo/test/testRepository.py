@@ -76,5 +76,18 @@ class TestRepository(TestCase):
       self.assertEqual(read(app, "other.dat"), read(lib, "other.dat"))
 
 
+  def testOutput(self):
+    """Verify that we can retrieve a command's standard output contents."""
+    with Repository(GIT) as foo:
+      write(foo, "foo.c", data="// foo.c")
+      foo.add("foo.c")
+      foo.commit()
+
+      # We also verify here that we can invoke a git command containing
+      # a dash (rev-parse in this case).
+      sha1 = foo.revParse("HEAD")
+      self.assertRegex(sha1[:-1].decode("utf-8"), "[0-9a-f]{40}")
+
+
 if __name__ == "__main__":
   main()
