@@ -26,6 +26,7 @@ from os import (
   getcwd,
 )
 from os.path import (
+  commonprefix,
   join,
 )
 from re import (
@@ -69,11 +70,20 @@ class Repository:
     def changeDir(self, *args, **kwargs):
       """Change the current directory, invoke the decorated function, and revert the change."""
       cwd = getcwd()
-      chdir(self._directory.name)
-      try:
+      git_dir = self._directory.name
+
+      # We only want to change the current working directory into the
+      # git repository if we are not already *somewhere* in the git
+      # repository. This behavior is useful for testing correct
+      # treatment of relative paths.
+      if commonprefix([cwd, git_dir]) != git_dir:
+        chdir(git_dir)
+        try:
+          return function(self, *args, **kwargs)
+        finally:
+          chdir(cwd)
+      else:
         return function(self, *args, **kwargs)
-      finally:
-        chdir(cwd)
 
     return changeDir
 
