@@ -19,6 +19,9 @@
 
 """Git repository functionality for Python."""
 
+from deso.execute import (
+  execute,
+)
 from os import (
   chdir,
   devnull,
@@ -31,10 +34,6 @@ from os.path import (
 )
 from re import (
   sub,
-)
-from subprocess import (
-  check_output,
-  DEVNULL,
 )
 from tempfile import (
   TemporaryDirectory,
@@ -122,10 +121,7 @@ class Repository:
   @autoChangeDir
   def git(self, *args, **kwargs):
     """Run a git command."""
-    if "stderr" not in kwargs:
-      kwargs["stderr"] = DEVNULL
-
-    return check_output([self._git] + list(args), **kwargs)
+    return execute(self._git, *args, **kwargs)
 
 
   def __getattr__(self, name):
