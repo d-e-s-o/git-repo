@@ -24,8 +24,6 @@ from deso.execute import (
 )
 from os import (
   chdir,
-  devnull,
-  environ,
   getcwd,
 )
 from os.path import (
@@ -87,40 +85,14 @@ class Repository:
     return changeDir
 
 
-  def unsetHome(function):
-    """Decorator to unset the "HOME" environment variable."""
-    # TODO: Our approach of unsetting HOME works but is not side-effect
-    #       free from the point of view of other programs. In fact, it
-    #       might lead to hard-to-debug problems when concurrently run
-    #       programs have no HOME. What we need instead is the ability
-    #       to execute programs in an empty environment or at least in a
-    #       customized one.
-    def clearHome(self, *args, **kwargs):
-      home = environ["HOME"]
-      # We unset HOME because we do not want git to read custom
-      # configuration (~/.gitconfig). We likely have no way of prohibitting
-      # reading of a more global configuration (somewhere in /etc/) so
-      # we have to live with that.
-      # The rationale is that although git prohibits redefining (aliasing)
-      # existing primitives (such as 'add' or 'commit'), the user might have
-      # enabled something like signing of commits. That could break the
-      # batch processing requirement of the test because the user might have
-      # to input a password or such.
-      # We do not expect anyone to check or modify HOME subsequently. So
-      # unsetting it once for the module should be enough.
-      environ["HOME"] = devnull
-      try:
-        return function(self, *args, **kwargs)
-      finally:
-        environ["HOME"] = home
-
-    return clearHome
-
-
-  @unsetHome
   @autoChangeDir
   def git(self, *args, **kwargs):
     """Run a git command."""
+    # If not requested otherwise we always start git with an empty
+    # environment. We do not want any of the global/user-specific
+    # configuration to have effect on the commands.
+    kwargs.setdefault("env", {})
+
     return execute(self._git, *args, **kwargs)
 
 
